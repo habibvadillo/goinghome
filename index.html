@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Going Home</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Orbitron"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      rel="stylesheet"
+      href="style.css
+    "
+    />
+  </head>
+  <body>
+    <canvas id="myCanvas" width="360" height="551"></canvas>
+    <div id="menu">
+      <div>
+        <label for="difficulty">Difficulty:</label>
+        <select name="difficulty" id="difficulty">
+          <option value="Peaceful">Peaceful</option>
+          <option value="Normal">Normal</option>
+          <option value="Impossible">Impossible</option>
+        </select>
+      </div>
+      <button id="start">Go Home</button>
+    </div>
+    <div id="restart-div">
+      <p style="padding: 0px 15px">
+        You didnt get home!<br />
+        Mom and Dad are worried sick!
+      </p>
+      <div>
+        <button class="restartBtn">Restart</button>
+        <button class="menuBtn">Main Menu</button>
+      </div>
+    </div>
+    <div id="win-div">
+      <p style="padding: 0px 15px">
+        You made it home! You're parents are so proud of you!
+      </p>
+      <p id="score" style="margin: 0px; font-weight: bold"></p>
+      <h2>Highscores</h2>
+      <ul style="margin: 0px; padding: 0px"></ul>
+      <input
+        style="width: 50%; margin-top: 15px"
+        type="text"
+        id="name"
+        placeholder="Your Name"
+      />
+      <buttons>
+        <button class="submitScoreBtn">Submit</button>
+        <button class="menuBtn">Main Menu</button>
+        <button class="restartBtn">Replay</button>
+      </buttons>
+    </div>
+
+    <script src="index.js"></script>
+  </body>
+</html>

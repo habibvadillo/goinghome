@@ -1,0 +1,46 @@
+#menu {
+  font-weight: bold;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  background-image: url("./images/menuPlate.PNG");
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 134px;
+  width: 242px;
+  align-items: center;
+  position: absolute;
+  top: 370px;
+  left: 70px;
+}
+#menu button {
+  margin-top: 20px;
+  display: block;
+}
+
+#win-div {
+  position: absolute;
+  display: none;
+  background-color: rgba(255, 255, 255, 0.5);
+  width: 250px;
+  border: 2px solid black;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#restart-div {
+  position: absolute;
+  display: none;
+  background-color: white;
+  width: 200px;
+  border: 2px solid black;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+button {
+  margin: 15px 5px;
+}
