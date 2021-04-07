@@ -9,6 +9,7 @@ let restartDiv = document.querySelector("#restart-div");
 let winDiv = document.querySelector("#win-div");
 let restartBtn = document.querySelectorAll(".restartBtn");
 let menuBtn = document.querySelectorAll(".menuBtn");
+let muteBtn = document.querySelector("#muteBtn");
 let endMenuBtn = winDiv.querySelector(".menuBtn");
 let score = document.querySelector("#score");
 let highscores = winDiv.querySelector("ul");
@@ -18,7 +19,10 @@ let submitScoreBtn = winDiv.querySelector(".submitScoreBtn");
 let inputName = winDiv.querySelector("input");
 let difficulty = document.querySelector("#difficulty");
 let windAlert = document.querySelector("#windAlert");
+let bgAudio = document.querySelector("audio");
 
+bgAudio.volume = 0.005;
+muteBtn.style.left = `${canvas.width - 40}px`;
 // Images
 let menuBg = new Image();
 menuBg.src = "./images/menubg.png";
@@ -90,7 +94,7 @@ keys.SPACE = 32;
 let hitBlue = false;
 let redBreak = false;
 let windIncoming = false;
-
+let audioOn = false;
 let floor = canvas.height - 165;
 
 // Slime
@@ -116,7 +120,8 @@ let platformWidth = 100,
   platforms = [],
   isOnPlatform = false,
   currentPlatform = {},
-  nextPlatform = {};
+  nextPlatform = {},
+  windStarts = [];
 
 let started = false;
 
@@ -277,7 +282,6 @@ let loopBackgrounds = () => {
     bgs[0].y > canvas.height &&
     platformCount < winningPlatform - platformLimit - 1
   ) {
-    console.log(bgs);
     bgs.push(new BackGround(sewerBg, 0, 0 - sewerBg.height));
     bgs.shift();
   }
@@ -403,26 +407,37 @@ let gameLoop = () => {
     drawTime();
   }
 
-  if (mode === "Normal") {
-    if (currentPlatform.number === winningPlatform / 2 && !windIncoming) {
-      let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
-      let incomingWind =
-        ((Math.floor(Math.random() * 11) + 5) / 10) * plusOrMinus;
-      let windDirection = plusOrMinus === 1 ? "Right" : "Left";
-      windIncoming = true;
-      windAlert.style.display = "flex";
-      windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
-        incomingWind * 10
-      )}km/h to the ${windDirection} </p>`;
-      centerDiv(windAlert);
-      setTimeout(() => {
-        windAlert.style.display = "none";
-        wind = incomingWind;
-      }, 5000);
-    }
-    if (currentPlatform.number === winningPlatform / 2) {
-      wind = 0;
-    }
+  if (mode !== "Peaceful") {
+    windStarts.forEach((plat) => {
+      if (currentPlatform.number === plat && !windIncoming) {
+        windIncoming = true;
+        let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
+        let incomingWind =
+          ((Math.floor(Math.random() * 5) + 5) / 10) * plusOrMinus;
+        let windDirection = plusOrMinus === 1 ? "Right" : "Left";
+        windAlert.style.display = "flex";
+        windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
+          incomingWind * 10
+        )}km/h to the ${windDirection} </p>`;
+        centerDiv(windAlert);
+        setTimeout(() => {
+          windAlert.style.display = "none";
+          wind = incomingWind;
+          setTimeout(() => {
+            windAlert.style.backgroundColor = "rgba(66, 203, 245, 0.8)";
+            windAlert.style.display = "flex";
+            windAlert.innerHTML =
+              "<p style='padding: 25px; margin: 0px'>The winds have calmed<p>";
+            windIncoming = false;
+            wind = 0;
+            setTimeout(() => {
+              windAlert.style.display = "none";
+              windAlert.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
+            }, 2000);
+          }, 10000);
+        }, 4000);
+      }
+    });
   }
 
   lastPlatform = platforms[platforms.length - 1];
@@ -504,7 +519,9 @@ let gameLoop = () => {
 let start = () => {
   // Reset settings
 
+  windStarts = [];
   windIncoming = false;
+  windAlert.style.display = "none";
   time = "00:00";
   gameOver = false;
   keys.LEFT = 37;
@@ -542,16 +559,25 @@ let start = () => {
   if (mode === "Peaceful") {
     winningPlatform = 50;
   } else if (mode === "Normal") {
-    gameSpeed = 1.5;
+    gameSpeed = 1.3;
     redStart = 50;
     blueStart = 25;
-    winningPlatform = 10;
+    winningPlatform = 100;
   } else {
     gameSpeed = 2;
     redStart = 0;
     blueStart = 0;
     winningPlatform = 100;
   }
+
+  // Add platforms that initiate winds
+
+  windStarts.push(
+    Math.floor(Math.random() * 10 + winningPlatform / 10),
+    Math.floor(Math.random() * 10 + (winningPlatform / 10) * 4),
+    Math.floor(Math.random() * 10 + (winningPlatform / 10) * 7)
+  );
+
   jumpHeight = platformInterval + 20;
   jumpSpeed = 3 * gameSpeed;
   highscoreTitle.style.display = "none";
@@ -559,6 +585,7 @@ let start = () => {
   replayBtn.style.display = "none";
   loadPlatforms();
   gameLoop();
+  console.log(windStarts);
 };
 
 let submitScore = () => {
@@ -599,6 +626,10 @@ window.addEventListener("load", () => {
   loadMainMenu();
   startBtn.addEventListener("click", () => {
     start();
+    if (audioOn) {
+      bgAudio.play();
+      muteBtn.style.backgroundImage = 'url("./images/audioOn.png")';
+    }
   });
   restartBtn.forEach((b) => {
     b.addEventListener("click", () => {
@@ -612,5 +643,17 @@ window.addEventListener("load", () => {
   });
   submitScoreBtn.addEventListener("click", () => {
     submitScore();
+  });
+  muteBtn.addEventListener("click", () => {
+    muteBtn.blur();
+    if (audioOn) {
+      audioOn = false;
+      bgAudio.pause();
+      muteBtn.style.backgroundImage = 'url("./images/audioOff.png")';
+    } else {
+      audioOn = true;
+      bgAudio.play();
+      muteBtn.style.backgroundImage = 'url("./images/audioOn.png")';
+    }
   });
 });
