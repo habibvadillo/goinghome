@@ -9,13 +9,15 @@ let restartDiv = document.querySelector("#restart-div");
 let winDiv = document.querySelector("#win-div");
 let restartBtn = document.querySelectorAll(".restartBtn");
 let menuBtn = document.querySelectorAll(".menuBtn");
+let endMenuBtn = winDiv.querySelector(".menuBtn");
 let score = document.querySelector("#score");
 let highscores = winDiv.querySelector("ul");
 let highscoreTitle = winDiv.querySelector("h2");
 let replayBtn = winDiv.querySelector(".restartBtn");
-let sumbitScoreBtn = winDiv.querySelector(".submitScoreBtn");
+let submitScoreBtn = winDiv.querySelector(".submitScoreBtn");
 let inputName = winDiv.querySelector("input");
 let difficulty = document.querySelector("#difficulty");
+let windAlert = document.querySelector("#windAlert");
 
 // Images
 let menuBg = new Image();
@@ -87,6 +89,7 @@ keys.D = 68;
 keys.SPACE = 32;
 let hitBlue = false;
 let redBreak = false;
+let windIncoming = false;
 
 let floor = canvas.height - 165;
 
@@ -141,9 +144,9 @@ let BackGroundDown = 1;
 
 document.body.onkeyup = function (e) {
   if (inputName.value < 1) {
-    sumbitScoreBtn.disabled = true;
+    submitScoreBtn.disabled = true;
   } else {
-    sumbitScoreBtn.disabled = false;
+    submitScoreBtn.disabled = false;
   }
   keys[e.which] = e.type == "keydown";
 };
@@ -400,9 +403,22 @@ let gameLoop = () => {
     drawTime();
   }
 
-  if (mode !== "Peaceful") {
-    if (platforms[platforms.length - 1].number > winningPlatform / 2) {
-      console.log("winds incoming!");
+  if (mode === "Normal") {
+    if (currentPlatform.number === winningPlatform / 2 && !windIncoming) {
+      let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
+      let incomingWind =
+        ((Math.floor(Math.random() * 11) + 5) / 10) * plusOrMinus;
+      let windDirection = plusOrMinus === 1 ? "Right" : "Left";
+      windIncoming = true;
+      windAlert.style.display = "flex";
+      windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
+        incomingWind * 10
+      )}km/h to the ${windDirection} </p>`;
+      centerDiv(windAlert);
+      setTimeout(() => {
+        windAlert.style.display = "none";
+        wind = incomingWind;
+      }, 5000);
     }
     if (currentPlatform.number === winningPlatform / 2) {
       wind = 0;
@@ -437,6 +453,7 @@ let gameLoop = () => {
       keys = {
         SPACE: 32,
       };
+      wind = 0;
       reachedEnd = true;
       gameSpeed = 0;
       winTime = seconds;
@@ -487,6 +504,7 @@ let gameLoop = () => {
 let start = () => {
   // Reset settings
 
+  windIncoming = false;
   time = "00:00";
   gameOver = false;
   keys.LEFT = 37;
@@ -527,7 +545,7 @@ let start = () => {
     gameSpeed = 1.5;
     redStart = 50;
     blueStart = 25;
-    winningPlatform = 100;
+    winningPlatform = 10;
   } else {
     gameSpeed = 2;
     redStart = 0;
@@ -537,12 +555,13 @@ let start = () => {
   jumpHeight = platformInterval + 20;
   jumpSpeed = 3 * gameSpeed;
   highscoreTitle.style.display = "none";
+  endMenuBtn.style.display = "none";
   replayBtn.style.display = "none";
   loadPlatforms();
   gameLoop();
 };
 
-let sumbitScore = () => {
+let submitScore = () => {
   winTimes.push({ name: `${inputName.value}`, time: winTime });
   winTimes.sort((a, b) => a.winTime - b.winTime);
   winTimes.forEach((t) => {
@@ -550,9 +569,10 @@ let sumbitScore = () => {
     newScore.innerText = `${t.name}: ${formatTime(t.time)}`;
     highscores.appendChild(newScore);
   });
+  endMenuBtn.style.display = "inline";
   replayBtn.style.display = "inline";
   highscoreTitle.style.display = "block";
-  sumbitScoreBtn.style.display = "none";
+  submitScoreBtn.style.display = "none";
   inputName.style.display = "none";
 };
 
@@ -561,7 +581,7 @@ let restart = () => {
   inputName.style.display = "inline";
   restartDiv.style.display = "none";
   winDiv.style.display = "none";
-  sumbitScoreBtn.style.display = "inline";
+  submitScoreBtn.style.display = "inline";
   start();
 };
 
@@ -572,7 +592,7 @@ let backToMenu = () => {
   inputName.style.display = "inline";
   restartDiv.style.display = "none";
   winDiv.style.display = "none";
-  sumbitScoreBtn.style.display = "inline";
+  submitScoreBtn.style.display = "inline";
 };
 
 window.addEventListener("load", () => {
@@ -590,7 +610,7 @@ window.addEventListener("load", () => {
       backToMenu();
     });
   });
-  sumbitScoreBtn.addEventListener("click", () => {
-    sumbitScore();
+  submitScoreBtn.addEventListener("click", () => {
+    submitScore();
   });
 });
