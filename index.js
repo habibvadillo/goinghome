@@ -407,38 +407,36 @@ let gameLoop = () => {
     drawTime();
   }
 
-  if (mode !== "Peaceful") {
-    windStarts.forEach((plat) => {
-      if (currentPlatform.number === plat && !windIncoming) {
-        windIncoming = true;
-        let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
-        let incomingWind =
-          ((Math.floor(Math.random() * 5) + 5) / 10) * plusOrMinus;
-        let windDirection = plusOrMinus === 1 ? "Right" : "Left";
-        windAlert.style.display = "flex";
-        windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
-          incomingWind * 10
-        )}km/h to the ${windDirection} </p>`;
-        centerDiv(windAlert);
+  windStarts.forEach((plat) => {
+    if (currentPlatform.number === plat && !windIncoming) {
+      windIncoming = true;
+      let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
+      let incomingWind =
+        ((Math.floor(Math.random() * 5) + 5) / 10) * plusOrMinus;
+      let windDirection = plusOrMinus === 1 ? "Right" : "Left";
+      windAlert.style.display = "flex";
+      windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
+        incomingWind * 10
+      )}km/h to the ${windDirection} </p>`;
+      centerDiv(windAlert);
+      setTimeout(() => {
+        windAlert.style.display = "none";
+        wind = incomingWind;
         setTimeout(() => {
-          windAlert.style.display = "none";
-          wind = incomingWind;
+          windAlert.style.backgroundColor = "rgba(66, 203, 245, 0.8)";
+          windAlert.style.display = "flex";
+          windAlert.innerHTML =
+            "<p style='padding: 25px; margin: 0px'>The winds have calmed<p>";
+          windIncoming = false;
+          wind = 0;
           setTimeout(() => {
-            windAlert.style.backgroundColor = "rgba(66, 203, 245, 0.8)";
-            windAlert.style.display = "flex";
-            windAlert.innerHTML =
-              "<p style='padding: 25px; margin: 0px'>The winds have calmed<p>";
-            windIncoming = false;
-            wind = 0;
-            setTimeout(() => {
-              windAlert.style.display = "none";
-              windAlert.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
-            }, 2000);
-          }, 10000);
-        }, 4000);
-      }
-    });
-  }
+            windAlert.style.display = "none";
+            windAlert.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
+          }, 2000);
+        }, 10000);
+      }, 4000);
+    }
+  });
 
   lastPlatform = platforms[platforms.length - 1];
 
@@ -575,6 +573,7 @@ let start = () => {
   for (let i = 0; i < Math.floor(winningPlatform / 30); i++) {
     windStarts.push(Math.floor(Math.random() * 10 + 10 * (1 + i * 3)));
   }
+  console.log(windStarts);
   jumpHeight = platformInterval + 20;
   jumpSpeed = 3 * gameSpeed;
   highscoreTitle.style.display = "none";
