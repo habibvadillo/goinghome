@@ -13,7 +13,7 @@ let muteBtn = document.querySelector("#muteBtn");
 let endMenuBtn = winDiv.querySelector(".menuBtn");
 let score = document.querySelector("#score");
 let highscores = winDiv.querySelector("ul");
-let highscoreTitle = winDiv.querySelector("h2");
+let highscoreTitle = winDiv.querySelector("h3");
 let replayBtn = winDiv.querySelector(".restartBtn");
 let submitScoreBtn = winDiv.querySelector(".submitScoreBtn");
 let inputName = winDiv.querySelector("input");
@@ -21,6 +21,7 @@ let difficulty = document.querySelector("#difficulty");
 let windAlert = document.querySelector("#windAlert");
 let bgAudio = document.querySelector("audio");
 
+highscoreTitle.style.font = "20px";
 bgAudio.volume = 0.005;
 muteBtn.style.left = `${canvas.width - 40}px`;
 // Images
@@ -70,7 +71,9 @@ class Platform {
 }
 
 // Variables
-
+const HIGH_SCORES_PEACEFUL = "highscores",
+  HIGH_SCORES_NORMAL = "highscores2",
+  HIGH_SCORES_IMPOSSIBLE = "highscores3";
 let mode;
 let redStart, blueStart;
 let intervalId = 0;
@@ -82,7 +85,9 @@ let startTime,
   seconds = 0,
   time = "00:00",
   winTime,
-  winTimes = [],
+  winTimes = JSON.parse(localStorage.getItem(HIGH_SCORES_PEACEFUL)) || [],
+  winTimes2 = JSON.parse(localStorage.getItem(HIGH_SCORES_NORMAL)) || [],
+  winTimes3 = JSON.parse(localStorage.getItem(HIGH_SCORES_IMPOSSIBLE)) || [],
   reachedEnd = false;
 let gameSpeed = 1;
 let keys = {};
@@ -93,7 +98,8 @@ keys.D = 68;
 keys.SPACE = 32;
 let hitBlue = false;
 let redBreak = false;
-let windIncoming = false;
+let windIncoming = false,
+  windSpeed;
 let audioOn = false;
 let floor = canvas.height - 165;
 
@@ -412,7 +418,7 @@ let gameLoop = () => {
       windIncoming = true;
       let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
       let incomingWind =
-        ((Math.floor(Math.random() * 5) + 5) / 10) * plusOrMinus;
+        ((Math.floor(Math.random() * windSpeed) + 5) / 10) * plusOrMinus;
       let windDirection = plusOrMinus === 1 ? "Right" : "Left";
       windAlert.style.display = "flex";
       windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
@@ -493,7 +499,7 @@ let gameLoop = () => {
       moveSpeed = 1.5;
     }
   } else {
-    moveSpeed = 1;
+    moveSpeed = mode === "Peaceful" && !reachedEnd ? 0 : 1;
   }
 
   if (slimeY > canvas.height) {
@@ -503,6 +509,11 @@ let gameLoop = () => {
 
   if (gameOver) {
     cancelAnimationFrame(intervalId);
+    windAlert.style.display = "none";
+    let id = window.setTimeout(function () {}, 0);
+    while (id--) {
+      window.clearTimeout(id);
+    }
     if (hasWon) {
       winDiv.style.display = "flex";
       centerDiv(winDiv);
@@ -555,13 +566,18 @@ let start = () => {
   mode = difficulty.value;
 
   if (mode === "Peaceful") {
+    windSpeed = 1;
     winningPlatform = 50;
+    redStart = winningPlatform;
+    blueStart = winningPlatform;
   } else if (mode === "Normal") {
+    windSpeed = 5;
     gameSpeed = 1.3;
     redStart = 50;
     blueStart = 25;
     winningPlatform = 100;
   } else {
+    windSpeed = 5;
     gameSpeed = 2;
     redStart = 0;
     blueStart = 0;
@@ -583,17 +599,23 @@ let start = () => {
   gameLoop();
 };
 
-let submitScore = () => {
-  winTimes.push({ name: `${inputName.value}`, time: winTime });
-  winTimes.sort((a, b) => a.winTime - b.winTime);
-  winTimes.forEach((t) => {
-    let newScore = document.createElement("li");
-    newScore.innerText = `${t.name}: ${formatTime(t.time)}`;
-    highscores.appendChild(newScore);
-  });
+let submitScore = (difficulty, times) => {
+  let newScore = { name: `${inputName.value}`, time: winTime };
+  times.push(newScore);
+  localStorage.setItem(difficulty, JSON.stringify(times));
+  times.sort((a, b) => a.time - b.time);
+  console.log(times);
+  for (let i = 0; i < times.length; i++) {
+    if (i < 5) {
+      let listItem = document.createElement("li");
+      listItem.innerText = `${times[i].name}: ${formatTime(times[i].time)}`;
+      highscores.appendChild(listItem);
+    }
+  }
+  highscoreTitle.style.display = "block";
+  highscoreTitle.innerHTML = `Highscores (${mode})`;
   endMenuBtn.style.display = "inline";
   replayBtn.style.display = "inline";
-  highscoreTitle.style.display = "block";
   submitScoreBtn.style.display = "none";
   inputName.style.display = "none";
 };
@@ -637,7 +659,13 @@ window.addEventListener("load", () => {
     });
   });
   submitScoreBtn.addEventListener("click", () => {
-    submitScore();
+    if (mode === "Peaceful") {
+      submitScore(HIGH_SCORES_PEACEFUL, winTimes);
+    } else if (mode === "Normal") {
+      submitScore(HIGH_SCORES_NORMAL, winTimes2);
+    } else {
+      submitScore(HIGH_SCORES_IMPOSSIBLE, winTimes3);
+    }
   });
   muteBtn.addEventListener("click", () => {
     muteBtn.blur();
