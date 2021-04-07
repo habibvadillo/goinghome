@@ -82,7 +82,7 @@ let startTime,
   seconds = 0,
   time = "00:00",
   winTime,
-  winTimes = [{ name: "Habib", time: 61 }],
+  winTimes = [],
   reachedEnd = false;
 let gameSpeed = 1;
 let keys = {};
@@ -572,12 +572,9 @@ let start = () => {
 
   // Add platforms that initiate winds
 
-  windStarts.push(
-    Math.floor(Math.random() * 10 + winningPlatform / 10),
-    Math.floor(Math.random() * 10 + (winningPlatform / 10) * 4),
-    Math.floor(Math.random() * 10 + (winningPlatform / 10) * 7)
-  );
-
+  for (let i = 0; i < Math.floor(winningPlatform / 30); i++) {
+    windStarts.push(Math.floor(Math.random() * 10 + 10 * (1 + i * 3)));
+  }
   jumpHeight = platformInterval + 20;
   jumpSpeed = 3 * gameSpeed;
   highscoreTitle.style.display = "none";
@@ -585,7 +582,6 @@ let start = () => {
   replayBtn.style.display = "none";
   loadPlatforms();
   gameLoop();
-  console.log(windStarts);
 };
 
 let submitScore = () => {
