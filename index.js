@@ -218,7 +218,7 @@ let twoDigits = (value) => {
 let slimeJump = () => {
   isOnFloor =
     mode === "Peaceful" &&
-    bgs[0].img.src === "http://127.0.0.1:5500/images/sewerfloor.PNG" &&
+    bgs[0].img.src.includes("sewerfloor.PNG") &&
     slimeY > floor + bgs[0].y;
   if (!isJumping) {
     isJumping = true;
