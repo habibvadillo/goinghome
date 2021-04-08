@@ -575,8 +575,6 @@ let gameLoop = () => {
   }
 
   if (slimeY > canvas.height) {
-    if (mode === "Impossible") {
-    }
     hasWon = false;
     deathCount++;
     deathAudio.volume = 0.1;
@@ -585,7 +583,7 @@ let gameLoop = () => {
   }
   if (!reachedEnd) {
     drawTime();
-    if (mode === "Impossible") {
+    if (mode !== "Peaceful") {
       drawDeathCount();
     }
   }
