@@ -46,36 +46,6 @@ sewerExit.src = "./images/sewerExit.jpg";
 let slime = new Image();
 slime.src = "./images/slime.png";
 
-// Classes
-
-class BackGround {
-  constructor(img, x, y) {
-    this.img = img;
-    this.x = x;
-    this.y = y;
-  }
-}
-
-class Platform {
-  constructor(y, width, number, type) {
-    this.x =
-      type === 1
-        ? Math.floor(
-            Math.random() * (canvas.width - platformWidth - slime.width * 2.4) +
-              slime.width * 1.2
-          )
-        : Math.floor(
-            Math.random() * (canvas.width - platformWidth - slime.width * 1) +
-              slime.width * 0.5
-          );
-    this.y = y;
-    this.width = width;
-    this.number = number;
-    this.type = type;
-    this.broken = false;
-  }
-}
-
 // Variables
 const HIGH_SCORES_PEACEFUL = "highscores",
   HIGH_SCORES_NORMAL = "highscores2",
@@ -249,7 +219,7 @@ let slimeJump = () => {
   isOnFloor =
     mode === "Peaceful" &&
     bgs[0].img.src === "http://127.0.0.1:5500/images/sewerfloor.PNG" &&
-    slimeY === floor + bgs[0].y;
+    slimeY > floor + bgs[0].y;
   if (!isJumping) {
     isJumping = true;
   } else {
@@ -353,7 +323,7 @@ let loopBackgrounds = () => {
     bgs[0].y > canvas.height &&
     platformCount < winningPlatform - platformLimit - 1
   ) {
-    bgs.push(new BackGround(sewerBg, 0, 0 - sewerBg.height));
+    bgs.push(new BackGround(sewerBg, 0, bgs[1].y - sewerBg.height));
     bgs.shift();
   }
 };
@@ -385,7 +355,13 @@ let fallOffPlatform = () => {
 let drawPlatforms = (platform) => {
   if (!platform.broken) {
     ctx.fillStyle =
-      platform.type === 0 ? "yellow" : platform.type === 1 ? "blue" : "red";
+      platform.type === 0
+        ? "yellow"
+        : platform.type === 1
+        ? "blue"
+        : platform.type === 2
+        ? "red"
+        : "#0ffc03";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
     ctx.fillRect(platform.x, platform.y, platform.width, platformHeight);
@@ -427,6 +403,9 @@ let clearAddPlatforms = () => {
         if (platformCount + platforms.length + 1 > redStart) {
           type = Math.floor(Math.random() * 3);
         }
+      }
+      if (lastPlatform.number === winningPlatform - 1) {
+        type = 3;
       }
       platforms.push(
         new Platform(
@@ -762,7 +741,6 @@ window.addEventListener("load", () => {
   loadMainMenu();
 
   howToBtn.addEventListener("click", () => {
-    console.log("howto!");
     pageIndex = 0;
     loadPage();
     howToDiv.querySelector(".start").style.display = "none";
