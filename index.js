@@ -4,7 +4,7 @@ canvas.style.border = "2px solid black";
 
 // Selectors
 let menu = document.querySelector("#menu");
-let startBtn = document.querySelector("#start");
+let startBtn = document.querySelectorAll(".start");
 let restartDiv = document.querySelector("#restart-div");
 let winDiv = document.querySelector("#win-div");
 let restartBtn = document.querySelectorAll(".restartBtn");
@@ -20,9 +20,15 @@ let inputName = winDiv.querySelector("input");
 let difficulty = document.querySelector("#difficulty");
 let windAlert = document.querySelector("#windAlert");
 let bgAudio = document.querySelector("audio");
+let howToBtn = document.querySelector("#howTo");
+let howToDiv = document.querySelector("#howToPlay");
+let howToInfo = howToDiv.querySelector("#howToInfo");
+let nextPageBtn = document.querySelector("#nextPage");
+let prevPageBtn = document.querySelector("#prevPage");
+let deathAudio = document.querySelector("#deathsound");
 
 highscoreTitle.style.font = "20px";
-bgAudio.volume = 0.005;
+bgAudio.volume = 0.03;
 muteBtn.style.left = `${canvas.width - 40}px`;
 // Images
 let menuBg = new Image();
@@ -89,6 +95,8 @@ let startTime,
   winTimes2 = JSON.parse(localStorage.getItem(HIGH_SCORES_NORMAL)) || [],
   winTimes3 = JSON.parse(localStorage.getItem(HIGH_SCORES_IMPOSSIBLE)) || [],
   reachedEnd = false;
+// Pushing Friends's highscores
+winTimes2.push({ name: "Dan The Man", time: 76 });
 let gameSpeed = 1;
 let keys = {};
 keys.LEFT = 37;
@@ -102,6 +110,54 @@ let windIncoming = false,
   windSpeed;
 let audioOn = false;
 let floor = canvas.height - 165;
+let isOnFloor = true;
+let pageTitles = ["Controls", "Platforms", "Winds", "Difficulty"];
+let pagesArray = [
+  // Controls Page
+  `<p>
+    Jump: <img src="./images/Spacekey.png" alt="spacekey" />
+   </p>
+   <p>
+    Move Left: <img src="./images/Akey.png" alt="akey" /> or <img src="./images/Leftkey.png" alt="leftkey"/>
+   </p>
+   <p>
+    Move Right: <img src="./images/Dkey.png" alt="dkey" /> or <img src="./images/Rightkey.png" alt="leftkey"/>
+   </p>`,
+  // Platforms Page
+  `<p>
+    <span style="color: blue; font-weight: bold;">Blue Platforms</span> are impossible to jump through so you must jump around them.
+   </p>
+   <p>
+    <span style="color: red; font-weight: bold;">Red Platforms</span> will break shortly after you touch them but will reappear after a moment.
+   </p>`,
+  // Winds Page
+  `<p>
+    <span style="color: #E57FE5; font-weight: bold;">Winds</span> will come after 10 and every 30 or so platforms.
+   </p>`,
+  // Difficulty Page
+  `<p>
+    You're all set to start the journey <strong>home</strong>!
+   </p>
+   <p>
+    Set your difficulty here and get on your way!
+   </p>
+   <label for="difficultyFromPages">Difficulty:</label>
+   <select name="difficulty" id="difficultyFromPages">
+     <option value="Normal">Normal</option>
+     <option value="Peaceful">Peaceful</option>
+     <option value="Impossible">Impossible</option>
+   </select>`,
+];
+let pageIndex;
+let deathCount = 0;
+let deathSound;
+let deathSounds = [
+  "./audio/Death1.mp3",
+  "./audio/Death2.mp3",
+  "./audio/Death3.mp3",
+  "./audio/Death4.mp3",
+  "./audio/Death5.mp3",
+];
 
 // Slime
 
@@ -125,8 +181,8 @@ let platformWidth = 100,
   platformCount = 0,
   platforms = [],
   isOnPlatform = false,
-  currentPlatform = {},
-  nextPlatform = {},
+  currentPlatform,
+  nextPlatform,
   windStarts = [];
 
 let started = false;
@@ -190,6 +246,10 @@ let twoDigits = (value) => {
 // Jump
 
 let slimeJump = () => {
+  isOnFloor =
+    mode === "Peaceful" &&
+    bgs[0].img.src === "http://127.0.0.1:5500/images/sewerfloor.PNG" &&
+    slimeY === floor + bgs[0].y;
   if (!isJumping) {
     isJumping = true;
   } else {
@@ -215,15 +275,24 @@ let slimeJump = () => {
       platforms.forEach((plat) => {
         slimeBase = slimeY + slime.height;
         if (
-          !plat.broken &&
-          slimeBase > plat.y &&
-          slimeBase < plat.y + platformHeight / 2 &&
-          slimeX + slime.width >= plat.x &&
-          slimeX < plat.x + platformWidth
+          (!plat.broken &&
+            slimeBase > plat.y &&
+            slimeBase < plat.y + platformHeight / 2 &&
+            slimeX + slime.width >= plat.x &&
+            slimeX < plat.x + platformWidth) ||
+          isOnFloor
         ) {
-          hitBlue = false;
-          isOnPlatform = true;
+          clearInterval(jumping);
+          jumpDistance = 0;
+          isJumping = false;
+          falling = false;
           currentPlatform = plat;
+          if (currentPlatform > 0) {
+            isOnFloor = false;
+          } else {
+            isOnPlatform = true;
+          }
+          hitBlue = false;
           if (currentPlatform.type === 2) {
             setTimeout(() => {
               plat.broken = true;
@@ -232,10 +301,6 @@ let slimeJump = () => {
               }, 1500 / gameSpeed);
             }, 1000 / gameSpeed);
           }
-          jumpDistance = 0;
-          isJumping = false;
-          falling = false;
-          clearInterval(jumping);
         }
       });
     }
@@ -304,11 +369,12 @@ let loopPlatforms = () => {
 let fallOffPlatform = () => {
   slimeBase = slimeY + slime.height;
   if (
-    (currentPlatform.broken && isOnPlatform) ||
-    (isOnPlatform &&
-      !isJumping &&
-      (slimeX + slime.width < currentPlatform.x ||
-        slimeX >= currentPlatform.x + platformWidth))
+    !isOnFloor &&
+    ((currentPlatform.broken && isOnPlatform) ||
+      (isOnPlatform &&
+        !isJumping &&
+        (slimeX + slime.width < currentPlatform.x ||
+          slimeX >= currentPlatform.x + platformWidth)))
   ) {
     clearInterval(jumping);
     falling = true;
@@ -390,6 +456,14 @@ let drawTime = () => {
   ctx.strokeText(`${time}`, 70, 25);
 };
 
+let drawDeathCount = () => {
+  ctx.font = "bold 16px Verdana";
+  ctx.fillStyle = "red";
+  ctx.fillText(`DEATHCOUNT: ${deathCount}`, 80, 56);
+  ctx.lineWidth = 1;
+  ctx.strokeText(`DEATHCOUNT: ${deathCount}`, 80, 56);
+};
+
 // End Screen
 
 // Animation loop
@@ -409,25 +483,23 @@ let gameLoop = () => {
       drawPlatforms(platforms[i], i);
     }
   }
-  if (!reachedEnd) {
-    drawTime();
-  }
 
   windStarts.forEach((plat) => {
     if (currentPlatform.number === plat && !windIncoming) {
       windIncoming = true;
       let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
       let incomingWind =
-        ((Math.floor(Math.random() * windSpeed) + 5) / 10) * plusOrMinus;
+        (Math.floor(Math.random() * windSpeed) + 5) * plusOrMinus;
       let windDirection = plusOrMinus === 1 ? "Right" : "Left";
       windAlert.style.display = "flex";
+      windAlert.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
       windAlert.innerHTML = `<p>Winds Incoming! ${Math.abs(
-        incomingWind * 10
+        incomingWind
       )}km/h to the ${windDirection} </p>`;
       centerDiv(windAlert);
       setTimeout(() => {
         windAlert.style.display = "none";
-        wind = incomingWind;
+        wind = incomingWind / 10;
         setTimeout(() => {
           windAlert.style.backgroundColor = "rgba(66, 203, 245, 0.8)";
           windAlert.style.display = "flex";
@@ -439,7 +511,7 @@ let gameLoop = () => {
             windAlert.style.display = "none";
             windAlert.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
           }, 2000);
-        }, 10000);
+        }, 9000);
       }, 4000);
     }
   });
@@ -503,12 +575,24 @@ let gameLoop = () => {
   }
 
   if (slimeY > canvas.height) {
+    if (mode === "Impossible") {
+    }
     hasWon = false;
+    deathCount++;
+    deathAudio.volume = 0.1;
+    deathAudio.play();
     gameOver = true;
+  }
+  if (!reachedEnd) {
+    drawTime();
+    if (mode === "Impossible") {
+      drawDeathCount();
+    }
   }
 
   if (gameOver) {
     cancelAnimationFrame(intervalId);
+    windAlert.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
     windAlert.style.display = "none";
     let id = window.setTimeout(function () {}, 0);
     while (id--) {
@@ -528,6 +612,8 @@ let gameLoop = () => {
 let start = () => {
   // Reset settings
 
+  deathSound = Math.floor(Math.random() * deathSounds.length);
+  deathAudio.src = deathSounds[deathSound];
   windStarts = [];
   windIncoming = false;
   windAlert.style.display = "none";
@@ -562,7 +648,6 @@ let start = () => {
   menu.style.display = "none";
 
   // Set Difficulty
-
   mode = difficulty.value;
 
   if (mode === "Peaceful") {
@@ -577,7 +662,7 @@ let start = () => {
     blueStart = 25;
     winningPlatform = 100;
   } else {
-    windSpeed = 5;
+    windSpeed = 7;
     gameSpeed = 2;
     redStart = 0;
     blueStart = 0;
@@ -589,9 +674,9 @@ let start = () => {
   for (let i = 0; i < Math.floor(winningPlatform / 30); i++) {
     windStarts.push(Math.floor(Math.random() * 10 + 10 * (1 + i * 3)));
   }
-  console.log(windStarts);
   jumpHeight = platformInterval + 20;
   jumpSpeed = 3 * gameSpeed;
+  howToDiv.style.display = "none";
   highscoreTitle.style.display = "none";
   endMenuBtn.style.display = "none";
   replayBtn.style.display = "none";
@@ -604,7 +689,6 @@ let submitScore = (difficulty, times) => {
   times.push(newScore);
   localStorage.setItem(difficulty, JSON.stringify(times));
   times.sort((a, b) => a.time - b.time);
-  console.log(times);
   for (let i = 0; i < times.length; i++) {
     if (i < 5) {
       let listItem = document.createElement("li");
@@ -631,6 +715,7 @@ let restart = () => {
 
 let backToMenu = () => {
   loadMainMenu();
+  deathCount = 0;
   menu.style.display = "flex";
   highscores.innerHTML = "";
   inputName.style.display = "inline";
@@ -639,14 +724,82 @@ let backToMenu = () => {
   submitScoreBtn.style.display = "inline";
 };
 
+let loadPage = () => {
+  howToInfo.innerHTML = pagesArray[pageIndex];
+  howToDiv.querySelector("h2").innerText = pageTitles[pageIndex];
+};
+
+let nextPage = () => {
+  if (pageIndex < pagesArray.length - 1) {
+    pageIndex++;
+  }
+  loadPage();
+  if (pageIndex === pagesArray.length - 1) {
+    nextPageBtn.style.visibility = "hidden";
+    howToDiv.querySelector(".start").style.display = "inline";
+    difficulty.value = difficultyFromPages.value;
+    document
+      .querySelector("#difficultyFromPages")
+      .addEventListener("change", () => {
+        difficulty.value = difficultyFromPages.value;
+      });
+  }
+  prevPageBtn.innerText = "Prev";
+};
+
+let prevPage = () => {
+  if (pageIndex > 0) {
+    pageIndex--;
+    howToDiv.querySelector(".start").style.display = "none";
+    nextPageBtn.style.visibility = "visible";
+  }
+  if (pageIndex === 0) {
+    prevPageBtn.innerText = "Back";
+  }
+  nextPageBtn.innerText = "Next";
+  loadPage();
+};
+
 window.addEventListener("load", () => {
   loadMainMenu();
-  startBtn.addEventListener("click", () => {
-    start();
-    if (audioOn) {
-      bgAudio.play();
-      muteBtn.style.backgroundImage = 'url("./images/audioOn.png")';
+
+  howToBtn.addEventListener("click", () => {
+    console.log("howto!");
+    pageIndex = 0;
+    loadPage();
+    howToDiv.querySelector(".start").style.display = "none";
+    nextPageBtn.style.visibility = "visible";
+    nextPageBtn.innerText = "Next";
+    prevPageBtn.innerText = "Back";
+    howToDiv.style.display = "flex";
+    menu.style.display = "none";
+    centerDiv(howToDiv);
+  });
+  nextPageBtn.addEventListener("click", () => {
+    if (pageIndex === pagesArray.length - 1) {
+      howToDiv.style.display = "none";
+      start();
+    } else {
+      nextPage();
     }
+  });
+  prevPageBtn.addEventListener("click", () => {
+    if (pageIndex === 0) {
+      howToDiv.style.display = "none";
+      loadMainMenu();
+      menu.style.display = "flex";
+    } else {
+      prevPage();
+    }
+  });
+  startBtn.forEach((b) => {
+    b.addEventListener("click", () => {
+      start();
+      if (audioOn) {
+        bgAudio.play();
+        muteBtn.style.backgroundImage = 'url("./images/audioOn.png")';
+      }
+    });
   });
   restartBtn.forEach((b) => {
     b.addEventListener("click", () => {
