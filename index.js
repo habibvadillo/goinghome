@@ -10,6 +10,8 @@ let winDiv = document.querySelector("#win-div");
 let restartBtn = document.querySelectorAll(".restartBtn");
 let menuBtn = document.querySelectorAll(".menuBtn");
 let muteBtn = document.querySelector("#muteBtn");
+let musicToggle = document.querySelector("#musicToggle");
+let noMusic = musicToggle.querySelector("span");
 let endMenuBtn = winDiv.querySelector(".menuBtn");
 let score = document.querySelector("#score");
 let highscores = winDiv.querySelector("ul");
@@ -30,6 +32,7 @@ let deathAudio = document.querySelector("#deathsound");
 highscoreTitle.style.font = "20px";
 bgAudio.volume = 0.03;
 muteBtn.style.left = `${canvas.width - 40}px`;
+musicToggle.style.left = `${canvas.width - 80}px`;
 // Images
 let menuBg = new Image();
 menuBg.src = "./images/menubg.png";
@@ -66,7 +69,11 @@ let startTime,
   winTimes3 = JSON.parse(localStorage.getItem(HIGH_SCORES_IMPOSSIBLE)) || [],
   reachedEnd = false;
 // Pushing Friends's highscores
-winTimes2.push({ name: "Dan The Man", time: 76 });
+winTimes2.push(
+  { name: "Dan The Man", time: 76 },
+  { name: "Shaykh Umar Vadillo", time: 61 },
+  { name: "Habib The Creator", time: 58 }
+);
 let gameSpeed = 1;
 let keys = {};
 keys.LEFT = 37;
@@ -78,6 +85,7 @@ let hitBlue = false;
 let redBreak = false;
 let windIncoming = false,
   windSpeed;
+let musicOn = false;
 let audioOn = false;
 let floor = canvas.height - 165;
 let isOnFloor = true;
@@ -188,10 +196,17 @@ document.body.onkeyup = function (e) {
   keys[e.which] = e.type == "keydown";
 };
 document.body.onkeydown = function (e) {
+  if (e.which === 32 && gameOver && !hasWon) {
+    restart();
+  }
   keys[e.which] = e.type == "keydown";
 };
 
 // Functions / Refactoring
+
+function muteAllToggle(elem) {
+  elem.muted = !elem.muted;
+}
 
 let formatTime = (sec) => {
   return `${twoDigits(Math.floor(sec / 60))}:${twoDigits(sec % 60)}`;
@@ -217,9 +232,7 @@ let twoDigits = (value) => {
 
 let slimeJump = () => {
   isOnFloor =
-    mode === "Peaceful" &&
-    bgs[0].img.src.includes("sewerfloor.PNG") &&
-    slimeY > floor + bgs[0].y;
+    bgs[0].img.src.includes("sewerfloor.PNG") && slimeY > floor + bgs[0].y;
   if (!isJumping) {
     isJumping = true;
   } else {
@@ -263,7 +276,7 @@ let slimeJump = () => {
             isOnPlatform = true;
           }
           hitBlue = false;
-          if (currentPlatform.type === 2) {
+          if (currentPlatform.type === 2 && !isOnFloor) {
             setTimeout(() => {
               plat.broken = true;
               setTimeout(() => {
@@ -464,7 +477,11 @@ let gameLoop = () => {
   }
 
   windStarts.forEach((plat) => {
-    if (currentPlatform.number === plat && !windIncoming) {
+    if (
+      currentPlatform.number === plat &&
+      !windIncoming &&
+      mode !== "Peaceful"
+    ) {
       windIncoming = true;
       let plusOrMinus = Math.random() < 0.5 ? -1 : 1;
       let incomingWind =
@@ -505,7 +522,9 @@ let gameLoop = () => {
     slimeSpeed = 5 * gameSpeed;
   }
 
-  detectCharacterMovement();
+  if (canMove) {
+    detectCharacterMovement();
+  }
 
   fallOffPlatform();
 
@@ -588,7 +607,10 @@ let gameLoop = () => {
 };
 let start = () => {
   // Reset settings
-
+  canMove = false;
+  setTimeout(() => {
+    canMove = true;
+  }, 200);
   deathSound = Math.floor(Math.random() * deathSounds.length);
   deathAudio.src = deathSounds[deathSound];
   windStarts = [];
@@ -771,10 +793,6 @@ window.addEventListener("load", () => {
   startBtn.forEach((b) => {
     b.addEventListener("click", () => {
       start();
-      if (audioOn) {
-        bgAudio.play();
-        muteBtn.style.backgroundImage = 'url("./images/audioOn.png")';
-      }
     });
   });
   restartBtn.forEach((b) => {
@@ -796,16 +814,28 @@ window.addEventListener("load", () => {
       submitScore(HIGH_SCORES_IMPOSSIBLE, winTimes3);
     }
   });
+  musicToggle.addEventListener("click", () => {
+    musicToggle.blur();
+    if (musicOn) {
+      musicOn = false;
+      bgAudio.pause();
+      noMusic.style.display = "inline";
+    } else {
+      musicOn = true;
+      bgAudio.play();
+      noMusic.style.display = "none";
+    }
+  });
   muteBtn.addEventListener("click", () => {
     muteBtn.blur();
     if (audioOn) {
       audioOn = false;
-      bgAudio.pause();
-      muteBtn.style.backgroundImage = 'url("./images/audioOff.png")';
+      document.querySelectorAll("audio").forEach((elem) => muteAllToggle(elem));
+      muteBtn.innerText = "🔊";
     } else {
       audioOn = true;
-      bgAudio.play();
-      muteBtn.style.backgroundImage = 'url("./images/audioOn.png")';
+      document.querySelectorAll("audio").forEach((elem) => muteAllToggle(elem));
+      muteBtn.innerText = "🔈";
     }
   });
 });

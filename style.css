@@ -99,7 +99,7 @@ button {
 }
 
 #muteBtn {
-  background-image: url("./images/audioOff.png");
+  font-size: 24px;
   display: inline;
   position: absolute;
   border-radius: 50%;
@@ -107,6 +107,23 @@ button {
   background-color: transparent;
   width: 35px;
   height: 35px;
+}
+
+#musicToggle {
+  font-size: 24px;
+  display: inline;
+  position: absolute;
+  border-radius: 50%;
+  border-style: none;
+  background-color: transparent;
+  width: 35px;
+  height: 35px;
+}
+#musicToggle span {
+  color: white;
+  position: relative;
+  font-weight: bold;
+  right: 24px;
 }
 
 button:focus {
